@@ -29,7 +29,7 @@ func SendSMS(port io.ReadWriter, recipient, message string) error {
 	time.Sleep(1 * time.Second)
 
 	// Send message and end with Ctrl+Z
-	if _, err := port.Write([]byte(message + string(26))); err != nil { // 26 is Ctrl+Z
+	if _, err := port.Write([]byte(message + string(rune(26)))); err != nil {
 		return fmt.Errorf("failed to send message: %w", err)
 	}
 

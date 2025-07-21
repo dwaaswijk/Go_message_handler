@@ -52,6 +52,29 @@ Follow these steps to install and run the application:
    ```
 ---
 
+## Running Unit Tests
+
+This project includes unit tests to ensure the reliability of its functionality.
+
+### How to run the tests
+
+1. Ensure all dependencies are installed:
+   ```bash
+   go mod tidy
+   ```
+
+2. Run the unit tests using the `go test` command:
+   ```bash
+   go test ./...
+   ```
+
+   This will run all test files in the project.
+
+### Test Coverage
+To see the test coverage, you can use the `-cover` flag:
+
+---
+
 ## Configuration
 
 The application works with environment variables. You can use a `.env` file called `settings.env` (example included) for easy setup.

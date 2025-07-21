@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"message_handler/config" // Import the new package
 	"message_handler/sms"
 	"net/http"
 	"os"
@@ -12,29 +13,18 @@ import (
 	"sync"
 
 	"github.com/joho/godotenv"
+	"github.com/tarm/serial"
 	"golang.org/x/time/rate"
 )
 
 var (
-	portMutex sync.Mutex // Ensures thread safety for the modem port
-	apiKey    string     // API key for securing the endpoints
+	portMutex sync.Mutex
+	apiKey    string
 	smsQueue  *sms.SMSQueue
 )
 
-type AppConfig struct {
-	ServerPort   string
-	RateLimit    float64 // Requests per second
-	BurstLimit   int     // Burst requests allowed
-	SMTPHost     string
-	SMTPPort     int
-	SMTPUser     string
-	SMTPPass     string
-	DevicePath   string // Path to the serial device
-	MaxQueueSize int    // Maximum SMS queue size
-}
-
 // Update loadConfig function to include MaxQueueSize
-func loadConfig() (*AppConfig, error) {
+func loadConfig() (*config.AppConfig, error) {
 	err := godotenv.Load("settings.env")
 	if err != nil {
 		log.Println("Warning: Could not load settings.env. Falling back to system environment variables")
@@ -65,7 +55,7 @@ func loadConfig() (*AppConfig, error) {
 		maxQueueSize = 100 // Default value
 	}
 
-	return &AppConfig{
+	return &config.AppConfig{
 		ServerPort:   serverPort,
 		RateLimit:    rateLimit,
 		BurstLimit:   burstLimit,
@@ -78,11 +68,20 @@ func loadConfig() (*AppConfig, error) {
 	}, nil
 }
 
-// openSerialPort opens the serial port at the specified path
-func openSerialPort(devicePath string) (io.ReadWriteCloser, error) {
-	// Replace with actual serial port opening logic
-	// Here we use a mock implementation for demonstration
-	return os.OpenFile(devicePath, os.O_RDWR, 0666)
+// openSerialPort opens and configures the serial port at the specified path.
+// For example: devicePath="/dev/ttyUSB0" on Linux.
+func openSerialPort(devicePath string, baudRate int) (io.ReadWriteCloser, error) {
+	config := &serial.Config{
+		Name: devicePath,
+		Baud: baudRate,
+	}
+
+	port, err := serial.OpenPort(config)
+	if err != nil {
+		return nil, err
+	}
+
+	return port, nil
 }
 
 func main() {
@@ -99,7 +98,7 @@ func main() {
 	var serialPort io.ReadWriteCloser
 	serialPortError := ""
 	if apiKey != "" {
-		serialPort, err = openSerialPort(config.DevicePath)
+		serialPort, err = openSerialPort(config.DevicePath, 115200)
 		if err != nil {
 			serialPortError = fmt.Sprintf("Failed to open serial port: %v", err)
 			log.Println(serialPortError)
