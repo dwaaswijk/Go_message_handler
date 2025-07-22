@@ -112,11 +112,10 @@ This endpoint allows you to send an SMS using the configured modem.
 POST /api/sms
 
 ```bash
-curl -X POST [http://localhost:8080/api/sms](http://localhost:8080/api/sms)
--H "Content-Type: application/json"
--H "Authorization: Bearer <YOUR_API_KEY>"
--d '{ "recipient": "+1234567890", "message": "Hello! This is a test SMS." }'
-
+curl -X POST http://localhost:8080/send-sms \
+     -H "Authorization: your_api_key_here" \
+     -F "phone=+1234567890" \
+     -F "message=This is a test SMS"
 ```
 
 **Parameters:**
@@ -131,11 +130,13 @@ This endpoint allows you to send an email using the configured SMTP server.
 **Endpoint:** POST /api/email
 
 ```bash
- curl -X POST [http://localhost:8080/api/email](http://localhost:8080/api/email)
--H "Content-Type: application/json"
--H "Authorization: Bearer <YOUR_API_KEY>"
--d '{ "to": "example@domain.com", "subject": "Test Email", "body": "This is a test email sent from the Messaging Service" }'
+curl -X POST http://localhost:8080/send-email \
+     -H "Authorization: your_api_key_here" \
+     -F "to=test@example.com" \
+     -F "subject=Hello" \
+     -F "body=This is a test email"
 ```
+
 **Parameters:**
 - `to`: The email address of the recipient.
 - `subject`: The subject of the email.
