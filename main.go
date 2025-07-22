@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"message_handler/config" // Import the new package
+	"message_handler/config"
+	"message_handler/mail" // Import the email package
 	"message_handler/sms"
 	"net/http"
 	"os"
@@ -161,6 +162,15 @@ func main() {
 		smsQueue.Send(&sms.SMS{Recipient: phone, Message: message})
 		w.WriteHeader(http.StatusAccepted)
 		_, _ = w.Write([]byte("SMS queued successfully\n"))
+	})))
+
+	// Add the /send-email route
+	http.Handle("/send-email", rl.LimitMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !authenticate(r) {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		mail.HandleSendEmail(w, r, config)
 	})))
 
 	log.Printf("Server is listening on port %s...", config.ServerPort)
