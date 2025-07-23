@@ -82,7 +82,7 @@ The application works with environment variables. You can use a `.env` file call
 ### Example `settings.env`
 ```
 # API Key for requests
-SMS_API_KEY=PUTYOURAPIKEYHERE
+API_KEY=PUTYOURAPIKEYHERE
 
 # Server configuration
 SERVER_PORT=8080
@@ -91,14 +91,23 @@ SERVER_PORT=8080
 RATE_LIMIT=2          # 2 requests per second
 BURST_LIMIT=10        # 10 requests burst capacity
 
-# Maximum SMS queue size
-MAX_QUEUE_SIZE=100 
+# SMS configuration
+MAX_QUEUE_SIZE=5
+SMS_PROVIDER=twilio   # Options: "hardware" or "twilio"
+
+# For hardware
+# SERIAL_BAUD=9600
+
+# For Twilio
+TWILIO_SID=TWILIOSID
+TWILIO_AUTH_TOKEN=AUTHTOKEN
+TWILIO_PHONE=TWILIOPHONE
 
 # SMTP server configuration
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
-SMTP_USER=your-email@gmail.com
-SMTP_PASS=your-email-password
+SMTP_USER=YOUREMAILHERE
+SMTP_PASS=YOURAPPPASWORDHERE
 ```
 
 ## Example CURL Requests
@@ -112,10 +121,10 @@ This endpoint allows you to send an SMS using the configured modem.
 POST /api/sms
 
 ```bash
-curl -X POST http://localhost:8080/send-sms \
-     -H "Authorization: your_api_key_here" \
-     -F "phone=+1234567890" \
-     -F "message=This is a test SMS"
+curl -v -X POST http://localhost:8080/send-sms \
+  -H "Authorization: PUTYOURAPIKEYHERE" \
+  --data-urlencode "phone=+1234567890" \
+  --data-urlencode "message=Testing + symbol"
 ```
 
 **Parameters:**
@@ -131,10 +140,10 @@ This endpoint allows you to send an email using the configured SMTP server.
 
 ```bash
 curl -X POST http://localhost:8080/send-email \
-     -H "Authorization: your_api_key_here" \
-     -F "to=test@example.com" \
-     -F "subject=Hello" \
-     -F "body=This is a test email"
+  -H "Authorization: PUTYOURAPIKEYHERE" \
+  --form "to=example@example.com" \
+  --form "subject=HTML Test Email" \
+  --form-string "body=<h1>Hello!</h1><p>This is a <strong>test</strong> email with <a href='https://example.com'>HTML content</a>.</p>"
 ```
 
 **Parameters:**
