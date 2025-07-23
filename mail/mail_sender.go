@@ -27,13 +27,14 @@ func sendMail(cfg *config.AppConfig, to, subject, body string, dialer MailDialer
 	mailer.SetHeader("From", cfg.SMTPUser)
 	mailer.SetHeader("To", to)
 	mailer.SetHeader("Subject", subject)
-	mailer.SetBody("text/plain", body)
+	mailer.SetBody("text/html", body)
 
 	if err := dialer.DialAndSend(mailer); err != nil {
-		return fmt.Errorf("failed to send email: %v", err)
+		return fmt.Errorf("failed to send email: %v. make sure to check the settings.env and recompile it if you changed the settings", err)
 	}
 
-	log.Println("Email sent successfully")
+
+	log.Println("Email sent successfully to: " + to + " Subject: `" + subject + "`")
 	return nil
 }
 

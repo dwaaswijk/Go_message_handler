@@ -10,4 +10,6 @@ type AppConfig struct {
 	SMTPPass     string
 	DevicePath   string // Path to the serial device
 	MaxQueueSize int    // Maximum SMS queue size
+	SMSProvider string // "hardware" or "twilio"
+	SerialBaud int // Baud rate for hardware modem
 }

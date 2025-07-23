@@ -3,6 +3,7 @@ package sms
 import (
 	"log"
 	"sync"
+
 )
 
 // SMS represents a single SMS message
@@ -11,25 +12,29 @@ type SMS struct {
 	Message   string
 }
 
-// SMSQueue handles SMS sending in a queue
+// SMSQueue handles SMS sending in a queue with multiple sender options
 type SMSQueue struct {
-	queue  chan *SMS
-	stopCh chan struct{}
-	wg     sync.WaitGroup
-	send   func(*SMS)
+	queue       chan *SMS
+	stopCh      chan struct{}
+	wg          sync.WaitGroup
+	hardwareSend func(*SMS) error // Hardware-based sender
+	twilioSend   func(*SMS) error // Twilio-based sender
+	provider     string           // Selected provider ("hardware" or "twilio")
 }
 
-// NewSMSQueue initializes an SMS queue with the given capacity
-func NewSMSQueue(capacity int) *SMSQueue {
-	return &SMSQueue{
-		queue:  make(chan *SMS, capacity),
-		stopCh: make(chan struct{}),
-	}
+// SetProvider sets the preferred SMS provider
+func (q *SMSQueue) SetProvider(provider string) {
+	q.provider = provider
 }
 
-// SetSender defines the sending function for SMSQueue
-func (q *SMSQueue) SetSender(sendFunc func(*SMS)) {
-	q.send = sendFunc
+// SetHardwareSender configures the hardware SMS sender
+func (q *SMSQueue) SetHardwareSender(sendFunc func(*SMS) error) {
+	q.hardwareSend = sendFunc
+}
+
+// SetTwilioSender configures the Twilio SMS sender
+func (q *SMSQueue) SetTwilioSender(sendFunc func(*SMS) error) {
+	q.twilioSend = sendFunc
 }
 
 // Send queues an SMS message for sending
@@ -37,7 +42,7 @@ func (q *SMSQueue) Send(sms *SMS) {
 	q.queue <- sms
 }
 
-// Start begins the SMSQueue processing
+// Start begins processing the SMS queue
 func (q *SMSQueue) Start() {
 	q.wg.Add(1)
 	go func() {
@@ -45,10 +50,16 @@ func (q *SMSQueue) Start() {
 		for {
 			select {
 			case sms := <-q.queue:
-				if q.send != nil {
-					q.send(sms)
+				var err error
+				if q.provider == "twilio" && q.twilioSend != nil {
+					err = q.twilioSend(sms)
+				} else if q.provider == "hardware" && q.hardwareSend != nil {
+					err = q.hardwareSend(sms)
 				} else {
-					log.Println("No sender configured for SMSQueue")
+					log.Println("No sender configured or provider not set correctly")
+				}
+				if err != nil {
+					log.Printf("Failed to send SMS to %s: %v", sms.Recipient, err)
 				}
 			case <-q.stopCh:
 				return
@@ -57,7 +68,13 @@ func (q *SMSQueue) Start() {
 	}()
 }
 
-// Stop shuts down the SMSQueue
+func NewSMSQueue(bufferSize int) *SMSQueue {
+	return &SMSQueue{
+		queue:   make(chan *SMS, bufferSize),
+		stopCh:  make(chan struct{}),
+	}
+}
+
 func (q *SMSQueue) Stop() {
 	close(q.stopCh)
 	q.wg.Wait()
